@@ -1,6 +1,9 @@
 package com.example.demo.servcie;
 
 import java.util.List;
+import java.util.Optional;
+
+import javax.inject.Inject;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,34 +11,33 @@ import org.springframework.stereotype.Service;
 import com.example.demo.entity.Product;
 import com.example.demo.repo.ProductRepo;
 
-@Service
+@Service("product")
 public class ProductService {
 	@Autowired
-	private ProductRepo prepo;
-	public Product CreateProduct(Product p){
-		Product product=prepo.save(p);
-		return product;
+	private ProductRepo productRepo;
+	public Product createProduct(Product product){
+		Product product1=productRepo.save(product);
+		return product1;
 	}
 	
-public List<Product> FindAllProducts(){
-	List<Product> products=prepo.findAll();
-	return products;
-}
-public Product FindByIdProduct(Integer id) {
-	Product p=prepo.findById(id).get();
-	return p;
+public List<Product> findAllProducts(){
+	return productRepo.findAll();
 	
 }
-public Product UpdateById(Integer id,Product UpdatedProduct ) {
-	Product existingProduct=prepo.findById(id).orElse(null);
+public Product findByIdProduct(Integer id) {
+	return productRepo.findById(id).get();
+	
+}
+public Product updateById(Integer id,Product updatedProduct ) {
+	Product existingProduct=productRepo.findById(id).orElse(null);
     if (existingProduct != null) {
         // Update the existing product's fields with the new values from updatedProduct
-        existingProduct.setPname(UpdatedProduct.getPname()); // Update name
-        existingProduct.setPprice(UpdatedProduct.getPprice()); // Assuming you also have price to update
+        existingProduct.setPname(updatedProduct.getPname()); // Update name
+        existingProduct.setPprice(updatedProduct.getPprice()); // Assuming you also have price to update
          // Update description or any other fields
         
         // Save the updated product back to the repository
-        return prepo.save(existingProduct); // Save and return the updated product
+        return productRepo.save(existingProduct); // Save and return the updated product
     } else {
         // Handle the case where the product with the given id doesn't exist
         // For example, you can throw an exception or return null
@@ -43,13 +45,30 @@ public Product UpdateById(Integer id,Product UpdatedProduct ) {
     }
 
 }
-public boolean DeleteProductById(Integer id) {
-	if(prepo.existsById(id)) {
-		prepo.deleteById(id);
+public boolean deleteProductById(Integer id) {
+	if(productRepo.existsById(id)) {
+		productRepo.deleteById(id);
 		return true;
 	}
 	else {
 		return false;
 	}
 }
+public List<Product> findByProductName(String name){
+	return productRepo.findByProductName(name);
+}
+public List<Product> getProductsWithPriceGreaterThan(Double price){
+	return productRepo.findProductsWithPriceGreaterThan(price);
+}
+public List<Product> getByCustomerId(Integer customerId){
+	return productRepo.findByCustomerId(customerId);
+}
+public Optional<Product> getMostExpensiveProduct(){
+	return productRepo.findMostExpensiveProduct();
+	
+}
+public Long countProductsByCustomer(Integer customerId) {
+	return productRepo.countProductsByCustomer(customerId);
+}
+
 }
