@@ -28,6 +28,7 @@ public Product findByIdProduct(Integer id) {
 	return productRepo.findById(id).get();
 	
 }
+
 public Product updateById(Integer id,Product updatedProduct ) {
 	Product existingProduct=productRepo.findById(id).orElse(null);
     if (existingProduct != null) {

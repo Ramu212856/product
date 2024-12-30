@@ -1,138 +1,150 @@
 package com.example.demo;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.example.demo.entity.Product;
 import com.example.demo.repo.ProductRepo;
 import com.example.demo.servcie.ProductService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.util.List;
 import java.util.Optional;
 
-@SpringBootTest  // Load the full application context
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 public class ProductServiceTest {
 
-    @Autowired
-    private ProductService productService;  // Autowire the service layer
+    @Mock
+    private ProductRepo productRepo;
 
-    @Autowired
-    private ProductRepo productRepo;  // Autowire the repository layer
+    @InjectMocks
+    private ProductService productService;
 
     private Product product;
 
     @BeforeEach
     public void setUp() {
-        // Create a test product object before each test
-        product = new Product();
-        product.setPname("Laptop");
-        product.setPprice(1000.0);
+        MockitoAnnotations.openMocks(this);
+        product = new Product(1, "Laptop", 1500.0, null);
     }
 
     @Test
     public void testCreateProduct() {
-        // Act
+        when(productRepo.save(any(Product.class))).thenReturn(product);
+
         Product createdProduct = productService.createProduct(product);
 
-        // Assert
         assertNotNull(createdProduct);
         assertEquals("Laptop", createdProduct.getPname());
-        assertEquals(1000.0, createdProduct.getPprice());
+        assertEquals(1500.0, createdProduct.getPprice());
     }
 
     @Test
     public void testFindAllProducts() {
-        // Arrange
-        productService.createProduct(product);  // Ensure the product is saved before fetching all products
+        List<Product> products = List.of(product);
+        when(productRepo.findAll()).thenReturn(products);
 
-        // Act
-        List<Product> products = productService.findAllProducts();
+        List<Product> productList = productService.findAllProducts();
 
-        // Assert
-        assertNotNull(products);
-        assertTrue(products.size() > 0);
+        assertNotNull(productList);
+        assertEquals(1, productList.size());
+        assertEquals("Laptop", productList.get(0).getPname());
     }
 
     @Test
     public void testFindByIdProduct() {
-        // Arrange
-        Product savedProduct = productService.createProduct(product);
+        when(productRepo.findById(1)).thenReturn(Optional.of(product));
 
-        // Act
-        Product foundProduct = productService.findByIdProduct(savedProduct.getId());
+        Product fetchedProduct = productService.findByIdProduct(1);
 
-        // Assert
-        assertNotNull(foundProduct);
-        assertEquals(savedProduct.getId(), foundProduct.getId());
-        assertEquals("Laptop", foundProduct.getPname());
-        assertEquals(1000.0, foundProduct.getPprice());
-    }
-
-    @Test
-    public void testFindByIdProduct_NotFound() {
-        // Act
-        Product foundProduct = productService.findByIdProduct(999);  // A non-existing ID
-
-        // Assert
-        assertNull(foundProduct);  // Expecting null because product with ID 999 doesn't exist
+        assertNotNull(fetchedProduct);
+        assertEquals("Laptop", fetchedProduct.getPname());
     }
 
     @Test
     public void testUpdateProduct() {
-        // Arrange
-        Product savedProduct = productService.createProduct(product);
+        when(productRepo.findById(1)).thenReturn(Optional.of(product));
+        when(productRepo.save(any(Product.class))).thenReturn(product);
 
-        // Prepare the updated product object
-        Product updatedProduct = new Product();
-        updatedProduct.setPname("Smartphone");
-        updatedProduct.setPprice(800.0);
+        product.setPname("Updated Laptop");
+        Product updatedProduct = productService.updateById(1, product);
 
-        // Act
-        Product updated = productService.updateById(savedProduct.getId(), updatedProduct);
-
-        // Assert
-        assertNotNull(updated);
-        assertEquals("Smartphone", updated.getPname());
-        assertEquals(800.0, updated.getPprice());
+        assertNotNull(updatedProduct);
+        assertEquals("Updated Laptop", updatedProduct.getPname());
     }
 
     @Test
     public void testUpdateProduct_NotFound() {
-        // Prepare the updated product object
-        Product updatedProduct = new Product();
-        updatedProduct.setPname("Smartphone");
-        updatedProduct.setPprice(800.0);
+        when(productRepo.findById(999)).thenReturn(Optional.empty());
 
-        // Act
-        Product updated = productService.updateById(999, updatedProduct);  // Non-existing product ID
+        Product updatedProduct = productService.updateById(999, product);
 
-        // Assert
-        assertNull(updated);  // Expecting null because product with ID 999 doesn't exist
+        assertNull(updatedProduct);
     }
 
     @Test
-    public void testDeleteProductById() {
-        // Arrange
-        Product savedProduct = productService.createProduct(product);
+    public void testDeleteProduct() {
+        when(productRepo.existsById(1)).thenReturn(true);
 
-        // Act
-        boolean result = productService.deleteProductById(savedProduct.getId());
+        boolean isDeleted = productService.deleteProductById(1);
 
-        // Assert
-        assertTrue(result);
-        assertFalse(productRepo.existsById(savedProduct.getId()));  // Ensure the product is deleted from the database
+        assertTrue(isDeleted);
+        verify(productRepo, times(1)).deleteById(1);
     }
 
     @Test
-    public void testDeleteProductById_NotFound() {
-        // Act
-        boolean result = productService.deleteProductById(999);  // Non-existing product ID
+    public void testDeleteProduct_NotFound() {
+        when(productRepo.existsById(999)).thenReturn(false);
 
-        // Assert
-        assertFalse(result);  // The product doesn't exist, so return value should be false
+        boolean isDeleted = productService.deleteProductById(999);
+
+        assertFalse(isDeleted);
+    }
+
+    @Test
+    public void testFindByProductName() {
+        List<Product> products = List.of(product);
+        when(productRepo.findByProductName("Laptop")).thenReturn(products);
+
+        List<Product> productList = productService.findByProductName("Laptop");
+
+        assertNotNull(productList);
+        assertEquals(1, productList.size());
+        assertEquals("Laptop", productList.get(0).getPname());
+    }
+
+    @Test
+    public void testGetProductsWithPriceGreaterThan() {
+        List<Product> products = List.of(product);
+        when(productRepo.findProductsWithPriceGreaterThan(1000.0)).thenReturn(products);
+
+        List<Product> productList = productService.getProductsWithPriceGreaterThan(1000.0);
+
+        assertNotNull(productList);
+        assertEquals(1, productList.size());
+        assertEquals("Laptop", productList.get(0).getPname());
+    }
+
+    @Test
+    public void testGetMostExpensiveProduct() {
+        when(productRepo.findMostExpensiveProduct()).thenReturn(Optional.of(product));
+
+        Optional<Product> expensiveProduct = productService.getMostExpensiveProduct();
+
+        assertTrue(expensiveProduct.isPresent());
+        assertEquals("Laptop", expensiveProduct.get().getPname());
+    }
+
+    @Test
+    public void testCountProductsByCustomer() {
+        when(productRepo.countProductsByCustomer(1)).thenReturn(5L);
+
+        Long count = productService.countProductsByCustomer(1);
+
+        assertEquals(5L, count);
     }
 }

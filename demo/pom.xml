@@ -47,6 +47,7 @@
     <artifactId>javax.inject</artifactId>
     <version>1</version>
 </dependency>
+ 
 
 
     <!-- JUnit Jupiter (JUnit 5) dependencies -->

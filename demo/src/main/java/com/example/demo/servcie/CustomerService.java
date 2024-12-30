@@ -41,7 +41,33 @@ public class CustomerService {
 		 Optional<Customer> customer=customerRepository.findById(customerId);
 		 return customer;
 	 }
-	
+	// Update an existing customer
+	    public Customer updateCustomer(Integer customerId, Customer customerDetails) {
+	        Optional<Customer> existingCustomer = customerRepository.findById(customerId);
+
+	        if (existingCustomer.isPresent()) {
+	            Customer customerToUpdate = existingCustomer.get();
+	            customerToUpdate.setCname(customerDetails.getCname());
+	            customerToUpdate.setCpurchase(customerDetails.getCpurchase());
+	            customerToUpdate.setProduct(customerDetails.getProduct());
+	            return customerRepository.save(customerToUpdate);
+	        } else {
+	            return null; // If customer not found
+	        }
+	    }
+
+	    // Delete a customer
+	    public boolean deleteCustomer(Integer customerId) {
+	        Optional<Customer> existingCustomer = customerRepository.findById(customerId);
+
+	        if (existingCustomer.isPresent()) {
+	            customerRepository.deleteById(customerId);
+	            return true;
+	        } else {
+	            return false; // Customer not found
+	        }
+	    }
+
 	
 	
 	
